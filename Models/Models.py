@@ -22,6 +22,14 @@ class Credit_card (base):
     Total_Value = Column("Total_Value", Float)
     Date = Column("Date", Date)
     Category = Column("Category", String)
+
+    Monthly_Fees = relationship(
+        "Monthly_Fee",
+        backref="credit_card",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+    
     def __init__(self, Description, Monthly_Value, Monthly_Fee, Total_Value, Date, Category):
         
         self.Description = Description
