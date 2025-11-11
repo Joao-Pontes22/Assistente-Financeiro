@@ -91,3 +91,4 @@ class Management(base):
         self.Current_Balance = Current_Balance
         self.Current_Invoice = Current_Invoice
         self.Date = Date
+base.metadata.create_all(bind=db)
