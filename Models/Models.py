@@ -38,7 +38,7 @@ class Monthly_Fee (base):
     ID = Column("ID", Integer, primary_key=True, autoincrement=True)
     Description = Column("Description", String)
     Monthly_Value = Column("Monthly_Value", Float)
-    Credit_card_ID = Column("Credit_card_ID", ForeignKey("Credit_card.ID") )
+    Credit_card_ID = Column("Credit_card_ID", ForeignKey("Credit_card.ID", ondelete="CASCADE") )
     Date = Column("Date", Date)
     Status = Column("Status", String)
     Category = Column("Category", String)
