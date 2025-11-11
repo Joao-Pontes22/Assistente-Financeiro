@@ -27,7 +27,7 @@ def add_to_monthly_fee(Description: str, Date: str, session:Session):
 
 @Credit_card_Router.post("/add_expense_CC")
 async def add_expense(scheme: Credit_card_scheme, session:Session =  Depends(init_session)):
-    Total = scheme.Value * scheme.Monthly_Fee
+    Total = scheme.Monthly_Value * scheme.Monthly_Fee
     new_cc = Credit_card(Description=scheme.Description,
                          Monthly_Value=scheme.Monthly_Value,
                          Monthly_Fee=scheme.Monthly_Fee,
