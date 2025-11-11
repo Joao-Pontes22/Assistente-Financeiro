@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Date,  Integer, String, Integer, Float,ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 
-db = create_engine("postgresql://postgres:pgadmin@localhost:5432/Finances"
+db = create_engine("postgresql+psycopg2://finances_v7j8_user:5OqAIRw61E0lkEjF4aEitwwBpQyOwDoq@dpg-d49kqcq4d50c739cu690-a.virginia-postgres.render.com:5432/finances_v7j8?sslmode=require"
 )
 base = declarative_base()
 
