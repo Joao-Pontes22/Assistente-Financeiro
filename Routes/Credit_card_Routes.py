@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from Schemes.Credit_card_scheme import Credit_card_scheme, Update_Credit_card_scheme
 from Dependecies.Dependecies import init_session
 from dateutil.relativedelta import relativedelta
-
+from sqlalchemy import extract
 Credit_card_Router = APIRouter(prefix="/Credit_card", tags=["Credit_card"])
 
 Day_Close_Card = 10
@@ -79,5 +79,26 @@ async def Delete_expense(id: str,session:Session = Depends(init_session)):
 async def View_expenses(session:Session = Depends(init_session)):
     cc = session.query(Credit_card).all()
     mf = session.query(Monthly_Fee).all()
+    return {"Cartão de crédito": cc, 
+            "Mensalidade": mf}
+@Credit_card_Router.get("/View_all_expenses_cc_month")
+async def View_expenses(month:int,session:Session = Depends(init_session)):
+    cc = session.query(Credit_card).filter(extract("month", Credit_card.Date) == month).all()
+    mf = session.query(Monthly_Fee).filter(extract("month", Monthly_Fee.Date) == month).all()
+    return {"Cartão de crédito": cc, 
+            "Mensalidade": mf}
+
+@Credit_card_Router.get("/View_all_expenses_cc_year")
+async def View_expenses(year:int,session:Session = Depends(init_session)):
+    cc = session.query(Credit_card).filter(extract("year", Credit_card.Date) == year).all()
+    mf = session.query(Monthly_Fee).filter(extract("year", Monthly_Fee.Date) == year).all()
+    return {"Cartão de crédito": cc, 
+            "Mensalidade": mf}
+
+
+@Credit_card_Router.get("/View_all_expenses_cc_month_year")
+async def View_expenses(year:int,month:int,session:Session = Depends(init_session)):
+    cc = session.query(Credit_card).filter(extract("year", Credit_card.Date) == year,extract("month", Credit_card.Date) == month).all()
+    mf = session.query(Monthly_Fee).filter(extract("year", Monthly_Fee.Date) == year,extract("month", Monthly_Fee.Date) == month).all()
     return {"Cartão de crédito": cc, 
             "Mensalidade": mf}
