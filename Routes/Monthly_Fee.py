@@ -25,21 +25,22 @@ async def View_Monthly_Fee(year:int,session:Session = Depends(init_session)):
     return invoices_year
 
 
-@Monthly_Fee_Router.put("/Update_Monthly_Fee{id}")
+@Monthly_Fee_Router.put("/Update_Monthly_Fee_id")
 async def Update_Monthly_Fee(id:int, scheme: Update_Monthly_Fee_Scheme, session:Session = Depends(init_session)):
     monthly_fee = session.query(Monthly_Fee).filter(Monthly_Fee.ID == id).first()
-    if monthly_fee.Description is not None:
+    if scheme.Description is not None:
         monthly_fee.Description = scheme.Description
-    if monthly_fee.Date is not None:
+    if scheme.Date is not None:
         monthly_fee.Date = scheme.Date
-    if monthly_fee.Category is not None:
+    if scheme.Category is not None:
         monthly_fee.Category = scheme.Category
-    if monthly_fee.Monthly_Value is not None:
+    if scheme.Monthly_Value is not None:
         monthly_fee.Monthly_Value = scheme.Monthly_Value
-    if monthly_fee.Status is not None:
+    if scheme.Status is not None:
         monthly_fee.Status = scheme.Status
+
     if scheme.Status == "PAGO":
-        update_management(value=scheme.Monthly_Value,entry_date=date,session=session)
+        update_management(value=scheme.Monthly_Value,entry_date=date.today(),session=session)
         
     session.commit()
     return{"message": "Mensalidade atualizada com sucesso",
