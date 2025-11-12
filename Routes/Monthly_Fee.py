@@ -5,6 +5,7 @@ from sqlalchemy import extract
 from Dependecies.Dependecies import init_session
 from datetime import date
 from Schemes.Monthly_Fee_scheme import Update_Monthly_Fee_Scheme
+from Routes.Expenses_Routes import update_management
 Monthly_Fee_Router = APIRouter(prefix="/Monthly_Fee", tags=["Monthly_Fee"])
 
 
@@ -22,11 +23,19 @@ async def View_Monthly_Fee(year:int,session:Session = Depends(init_session)):
 @Monthly_Fee_Router.put("/Update_Monthly_Fee{id}")
 async def Update_Monthly_Fee(id:int, scheme: Update_Monthly_Fee_Scheme, session:Session = Depends(init_session)):
     monthly_fee = session.query(Monthly_Fee).filter(Monthly_Fee.ID == id).first()
-    monthly_fee.Description = scheme.Description
-    monthly_fee.Date = scheme.Date
-    monthly_fee.Category = scheme.Category
-    monthly_fee.Monthly_Value = scheme.Monthly_Value
-    monthly_fee.Status = scheme.Status
+    if monthly_fee.Description is not None:
+        monthly_fee.Description = scheme.Description
+    if monthly_fee.Date is not None:
+        monthly_fee.Date = scheme.Date
+    if monthly_fee.Category is not None:
+        monthly_fee.Category = scheme.Category
+    if monthly_fee.Monthly_Value is not None:
+        monthly_fee.Monthly_Value = scheme.Monthly_Value
+    if monthly_fee.Status is not None:
+        monthly_fee.Status = scheme.Status
+    if scheme.Status == "PAGO":
+        update_management(value=scheme.Monthly_Value,entry_date=date,session=session)
+        
     session.commit()
     return{"message": "Mensalidade atualizada com sucesso",
            "Dados": monthly_fee}
@@ -35,11 +44,16 @@ async def Update_Monthly_Fee(id:int, scheme: Update_Monthly_Fee_Scheme, session:
 async def Update_Monthly_Fee(year:int, month:int, scheme: Update_Monthly_Fee_Scheme, session:Session = Depends(init_session)):
     monthly_fee = session.query(Monthly_Fee).filter(extract("year",Monthly_Fee.Date) >= year,extract("month",Monthly_Fee.Date) >= month).all()
     for i in monthly_fee:
-        i.Description = scheme.Description
-        i.Date = scheme.Date
-        i.Category = scheme.Category
-        i.Monthly_Value = scheme.Monthly_Value
-        i.Status = scheme.Status
+        if i.Description is not None:
+            i.Description = scheme.Description
+        if i.Date is not None:
+            i.Date = scheme.Date
+        if i.Category is not None:
+            i.Category = scheme.Category
+        if i.Monthly_Value is not None:
+            i.Monthly_Value = scheme.Monthly_Value
+        if i.Status is not None:
+            i.Status = scheme.Status
     session.commit()
     return{"message": "Mensalidade atualizada com sucesso",
            "Dados": monthly_fee}
