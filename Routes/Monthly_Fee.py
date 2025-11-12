@@ -40,7 +40,7 @@ async def Update_Monthly_Fee(id:int, scheme: Update_Monthly_Fee_Scheme, session:
     return{"message": "Mensalidade atualizada com sucesso",
            "Dados": monthly_fee}
 
-@Monthly_Fee_Router.put("/Update_Greater_than_month_Year_Monthly_Fee")
+@Monthly_Fee_Router.put("/Update_fee")
 async def Update_Monthly_Fee(year:int, month:int, scheme: Update_Monthly_Fee_Scheme, session:Session = Depends(init_session)):
     monthly_fee = session.query(Monthly_Fee).filter(extract("year",Monthly_Fee.Date) >= year,extract("month",Monthly_Fee.Date) >= month).all()
     for i in monthly_fee:
@@ -58,7 +58,7 @@ async def Update_Monthly_Fee(year:int, month:int, scheme: Update_Monthly_Fee_Sch
     return{"message": "Mensalidade atualizada com sucesso",
            "Dados": monthly_fee}
 
-@Monthly_Fee_Router.get("/View_Greater_than_month_Year_Monthly_Fee")
+@Monthly_Fee_Router.get("/View_fee")
 async def Update_Monthly_Fee(year: int,month:int, session:Session = Depends(init_session)):
     monthly_fee = session.query(Monthly_Fee).filter(extract("year",Monthly_Fee.Date) >= year,extract("month",Monthly_Fee.Date) >= month).all()
     return monthly_fee
