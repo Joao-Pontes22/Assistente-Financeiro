@@ -7,3 +7,5 @@ class Update_Monthly_Fee_Scheme (BaseModel):
     Date : date
     Status : str
     Category : str
+    class Config:
+        from_attributes = True
