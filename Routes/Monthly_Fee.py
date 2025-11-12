@@ -9,7 +9,7 @@ from Routes.Expenses_Routes import update_management
 Monthly_Fee_Router = APIRouter(prefix="/Monthly_Fee", tags=["Monthly_Fee"])
 
 
-@Monthly_Fee_Router.get("/View_Monthly_Fee{month}")
+@Monthly_Fee_Router.get("/View_Fee_month")
 async def View_Monthly_Fee(month:int,session:Session = Depends(init_session)):
     invoices_month = session.query(Monthly_Fee).filter(extract('month',Monthly_Fee.Date) == month).all()
     return invoices_month
@@ -19,7 +19,7 @@ async def View_Monthly_Fee(session:Session = Depends(init_session)):
     invoices_month = session.query(Monthly_Fee).all()
     return invoices_month
 
-@Monthly_Fee_Router.get("/View_Monthly_Fee{year}")
+@Monthly_Fee_Router.get("/View_Fee_year")
 async def View_Monthly_Fee(year:int,session:Session = Depends(init_session)):
     invoices_year = session.query(Monthly_Fee).filter(extract('year',Monthly_Fee.Date) == year).all()
     return invoices_year
