@@ -7,4 +7,4 @@ class Management_Scheme (BaseModel):
     Current_Invoice: float
     Date: date
     class Config:
-        from_attributes: True
+        orm_mode = True

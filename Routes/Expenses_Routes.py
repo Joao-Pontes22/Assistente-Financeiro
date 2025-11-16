@@ -10,60 +10,38 @@ Expenses_Router = APIRouter(prefix="/Exepenses",tags=["Expenses"], )
 
 
 
-def update_management(value: float, entry_date: str, session: Session):
-    """Atualiza o saldo e fatura corrente no gerenciamento financeiro."""
-    today = date.today()
-    Day_Close_Card = date(today.year, today.month, 10)
-    # Busca o registro mais recente da tabela de gestão
-    last_management = (
-        session.query(Management)
-        .order_by(Management.Date.desc())
-        .first()
-    )
-    if today.month == 1:
-        close_previous = date(today.year - 1, 12, Day_Close_Card.day)
-    else:
-        close_previous = date(today.year, today.month - 1, Day_Close_Card.day)
+async def minus_expense (value:float, entry_date:date, session:Session):
+    inMoment_balance = session.query(Management).order_by(Management.ID.desc()).first()
+    if not inMoment_balance:
+        new_balance = Management(
+            Current_Balance=0 - value,
+            Current_Invoice=0,
+            Date=entry_date
+        )
+        session.add(new_balance)
+        session.commit()
+        return {
+            "message": "Primeiro saldo criado",
+            "Saldo": new_balance.Current_Balance,
+            "Fatura": new_balance.Current_Invoice
+        }
 
-    credit_card = session.query(Credit_card).filter(Credit_card.Date >= close_previous,
-                                                     Credit_card.Date < Day_Close_Card ).all()
-    
-    total_expense_cc = sum(c.Monthly_Value for c in credit_card)
-
-    monthly_fee_expense = session.query(Monthly_Fee).filter(Monthly_Fee.Date <= Day_Close_Card, Monthly_Fee.Status == "PENDENTE" ).all()
-    total_expense_mf = sum(c.Monthly_Value for c in monthly_fee_expense)
-    if not last_management:
-        # Caso seja a primeira inserção
-        current_balance = 0
-        current_invoice = 0
-    else:
-        current_balance = last_management.Current_Balance
-        current_invoice = last_management.Current_Invoice
-
-    # Atualiza os valores
-    new_balance = current_balance - value
-    new_invoice = current_invoice + value + total_expense_cc + total_expense_mf
-
-    # Cria novo registro
-    new_management = Management(
-        Current_Balance=new_balance,
-        Current_Invoice=new_invoice,
-        Date=entry_date or date.today()
+    # Caso JÁ exista registro
+    new_balance = Management(
+        Current_Balance=inMoment_balance.Current_Balance - value,
+        Current_Invoice=inMoment_balance.Current_Invoice,
+        Date=entry_date
     )
 
-    session.add(new_management)
+    session.add(new_balance)
     session.commit()
-    session.refresh(new_management)
 
     return {
-        "message": "Gestão atualizada com sucesso.",
-        "data": {
-            "Saldo_atual": float(new_management.Current_Balance),
-            "Fatura_atual": float(new_management.Current_Invoice),
-            "Data": str(new_management.Date)
-        }
+        "message": "Saldo atualizado com sucesso",
+        "Saldo": new_balance.Current_Balance,
+        "Fatura": new_balance.Current_Invoice
     }
-    
+
 
 
 
@@ -74,7 +52,7 @@ async def add_expense(scheme: Expense_scheme, session: Session = Depends(init_se
                            Date=scheme.Date,
                            Category=scheme.Category)
     session.add(new_expense)
-    update_management(value=scheme.Value, session=session, entry_date=scheme.Date )
+    await minus_expense(value=scheme.Value, session=session, entry_date=scheme.Date )
     session.commit()
     return{"message": "Despesa adicionado com sucesso",
            "dados": new_expense}
@@ -86,6 +64,15 @@ async def delete_expense(id:int, session:Session = Depends(init_session)):
     session.commit()
     return{"message": "Despesa deletada com sucesso",
            "Dados":despesa }
+
+
+@Expenses_Router.delete("/delete_all_expense")
+async def delete_all_expense(session:Session = Depends(init_session)):
+    despesa = session.query(Expenses).all()
+    for i in despesa:
+        session.delete(i)
+    session.commit()
+    return{"message": "Todas Despesa deletada com sucesso"}
 
 @Expenses_Router.put("/update_expense")
 async def update_expense(id:int,scheme:Update_Expense_scheme, session:Session = Depends(init_session)):

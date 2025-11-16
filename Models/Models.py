@@ -22,6 +22,7 @@ class Credit_card (base):
     Total_Value = Column("Total_Value", Float)
     Date = Column("Date", Date)
     Category = Column("Category", String)
+    Status = Column("Status", String)
 
     Monthly_Fees = relationship(
         "Monthly_Fee",
@@ -30,7 +31,7 @@ class Credit_card (base):
         passive_deletes=True
     )
     
-    def __init__(self, Description, Monthly_Value, Monthly_Fee, Total_Value, Date, Category):
+    def __init__(self, Description, Monthly_Value, Monthly_Fee, Total_Value, Date, Category, Status):
         
         self.Description = Description
         self.Monthly_Value = Monthly_Value
@@ -38,7 +39,8 @@ class Credit_card (base):
         self.Total_Value = Total_Value
         self.Date = Date
         self.Category = Category
-
+        self.Status = Status
+        
 class Monthly_Fee (base):
     __tablename__ = "Monthly_Fee"
 
