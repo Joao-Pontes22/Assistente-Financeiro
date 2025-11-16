@@ -70,12 +70,13 @@ async def View_Monthly_Fee(year:int,session:Session = Depends(init_session)):
 @Monthly_Fee_Router.put("/Update_status")
 async def Update_Status(id:int, status:str, session:Session = Depends(init_session)):
     monthly_fee = session.query(Monthly_Fee).filter(Monthly_Fee.ID == id).first()
+    upper_status = status.upper()
     if not monthly_fee:
         raise HTTPException (status_code=400, detail="Id não encontrado")
     if monthly_fee.Status == "PAGO":
         raise HTTPException(status_code=400, detail="Mensalidade já paga")
-    if status == "PAGO":
-        monthly_fee.Status = status
+    if upper_status == "PAGO":
+        monthly_fee.Status = upper_status
         await add_to_expense(value=monthly_fee.Monthly_Value, entry_date=date.today(),session=session, description=monthly_fee.Description, Category=monthly_fee.Category)
         await minus_invoices(value=monthly_fee.Monthly_Value,entry_date=date.today(),session=session)
     session.commit()
