@@ -275,6 +275,7 @@ async def View_expenses(session:Session = Depends(init_session)):
 
 @Credit_card_Router.get("/View_expenses_cc")
 async def View_expenses(month:int = None,
+                        id: int = None,
                         year: int = None,
                         description: str = None,
                         date: date = None,
