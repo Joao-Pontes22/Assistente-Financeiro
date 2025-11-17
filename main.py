@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from fastapi_mcp import FastApiMCP
 
 
-app = FastAPI()
+app = FastAPI(title="Assistente-Financeiro",
+              summary="Essa API tem como objetivo gerenciar finanças pessoais",
+              description="Essa API tem como objetivo gerenciar finanças pessoais através de automações, e intengraçõescom LLM"
+
+)
 mcp = FastApiMCP(app)
 mcp.mount_http()
 

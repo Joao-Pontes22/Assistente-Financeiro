@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from Dependecies.Dependecies import init_session
 from sqlalchemy.orm import Session
 from Schemes.Expense_scheme import Expense_scheme, Update_Expense_scheme
 from Models.Models import Expenses, Management, Credit_card, Monthly_Fee
 from Response.Expenses_Response import Expense_Responde
 from datetime import date
+from sqlalchemy import extract
 
 Expenses_Router = APIRouter(prefix="/Exepenses",tags=["Expenses"], )
 
@@ -90,7 +91,29 @@ async def update_expense(id:int,scheme:Update_Expense_scheme, session:Session = 
            "Dados": despesa}
 
 @Expenses_Router.get("View_Expenses")
-async def View_Expenses(session:Session = Depends(init_session)):
-    expenses = session.query(Expenses).all()
+async def View_Expenses(
+    id: int = None,
+    description: str = None,
+    category: str = None,
+    year:int = None,
+    month: int = None,
+    date: date = None,
+    session:Session = Depends(init_session)
+    ):
+
+    expense_array = {
+        Expenses.ID: id,
+        Expenses.Category:category,
+        Expenses.Description: description,
+        Expenses.Date: date,
+        extract('year', Expenses.Date): year,
+        extract('month', Expenses.Date): month
+    }
+    expenses = None
+    for column,value in expense_array.items():
+        if  value is not None:
+            expenses = session.query(Expenses).filter(column == value).all()
+        if expenses is None:
+            raise HTTPException(status_code=400, detail="despesa não encontrada")
     return{"message": "Lista de despesas carregadas",
            "Dados": expenses}

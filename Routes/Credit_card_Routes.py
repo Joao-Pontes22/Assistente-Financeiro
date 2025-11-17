@@ -211,22 +211,31 @@ async def add_expense(scheme: Credit_card_scheme, session:Session =  Depends(ini
            "Dados": new_cc}
 
 @Credit_card_Router.put("/Update_expense_cc")
-async def Updade_expense(id:int,scheme: Update_Credit_card_scheme, session:Session = Depends(init_session)):
-    expense = session.query(Credit_card).filter(Credit_card.ID == id).first()
-    mf = session.query(Monthly_Fee).filter(Monthly_Fee.Credit_card_ID == expense.ID).all()
-    if scheme.Description is not None:
-        expense.Description = scheme.Description
-    if scheme.Date is not None:
-        expense.Date = scheme.Date
-    if scheme.Monthly_Value is not None:
-        expense.Monthly_Value = scheme.Monthly_Value
-    if scheme.Monthly_Fee is not None:
-        expense.Monthly_Fee = scheme.Monthly_Fee
-    if scheme.Category is not None:
-        expense.Category = scheme.Category
-    if scheme.Status is not None:
-        expense.Status = scheme.Category
+async def Updade_expense( 
+                         scheme: Update_Credit_card_scheme,      
+                         id:int = None,
+                         month: int = None,
+                         year: int = None,
+                         date: date = None,
+                         description: str = None,
+                         session:Session = Depends(init_session)
+                         ):
+    credit_card_array = {
+                        Credit_card.ID:  id,
+                        Credit_card.Date:  date,
+                        Credit_card.Description:  description,
+                        extract('year', Credit_card.Date):  year,
+                        extract('month', Credit_card.Date): month}
+    expense = None
+    for column, value in credit_card_array.items():
+        if value is not None:
+         expense = session.query(Credit_card).filter(column == value).all()
+         expense.Category = scheme.Category
+         expense.Description = scheme.Description
+         expense.Monthly_Fee = scheme.Monthly_Fee
+         expense.Monthly_Value = scheme.Monthly_Value
     session.commit()
+    mf = session.query(Monthly_Fee).filter(Monthly_Fee.Credit_card_ID == expense.ID).all()
     for i in mf:
         session.delete(i)
     await add_to_monthly_fee(scheme.Description, scheme.Date, session)
@@ -263,26 +272,29 @@ async def View_expenses(session:Session = Depends(init_session)):
     mf = session.query(Monthly_Fee).all()
     return {"Cartão de crédito": cc, 
             "Mensalidade": mf}
-@Credit_card_Router.get("/View_all_expenses_cc_month")
-async def View_expenses(month:int,session:Session = Depends(init_session)):
-    cc = session.query(Credit_card).filter(extract("month", Credit_card.Date) == month).all()
-    mf = session.query(Monthly_Fee).filter(extract("month", Monthly_Fee.Date) == month).all()
-    return {"Cartão de crédito": cc, 
-            "Mensalidade": mf}
 
-@Credit_card_Router.get("/View_all_expenses_cc_year")
-async def View_expenses(year:int,session:Session = Depends(init_session)):
-    cc = session.query(Credit_card).filter(extract("year", Credit_card.Date) == year).all()
-    mf = session.query(Monthly_Fee).filter(extract("year", Monthly_Fee.Date) == year).all()
-    return {"Cartão de crédito": cc, 
-            "Mensalidade": mf}
-
-
-@Credit_card_Router.get("/View_all_expenses_cc_month_year")
-async def View_expenses(year:int,month:int,session:Session = Depends(init_session)):
-    cc = session.query(Credit_card).filter(extract("year", Credit_card.Date) == year,extract("month", Credit_card.Date) == month).all()
-    mf = session.query(Monthly_Fee).filter(extract("year", Monthly_Fee.Date) == year,extract("month", Monthly_Fee.Date) == month).all()
-    return {"Cartão de crédito": cc, 
+@Credit_card_Router.get("/View_expenses_cc")
+async def View_expenses(month:int = None,
+                        year: int = None,
+                        description: str = None,
+                        date: date = None,
+                        categoy: str = None,
+                        status: str = None,
+                        session:Session = Depends(init_session)):
+    
+    credit_card_array = {Credit_card.ID:  id,
+                        Credit_card.Status: status,
+                        Credit_card.Category: categoy,
+                        Credit_card.Date:  date,
+                        Credit_card.Description:  description,
+                        extract('year', Credit_card.Date):  year,
+                        extract('month', Credit_card.Date): month}
+    expenses = None
+    for column, value in credit_card_array.items():
+        if  value is  not None:
+            expenses = session.query(Credit_card).filter(column == value).all()
+            mf = session.query(Monthly_Fee).filter(Monthly_Fee.Credit_card_ID == expenses.ID).all()
+    return {"Cartão de crédito": expenses, 
             "Mensalidade": mf}
 
 @Credit_card_Router.post("/Pay_invoice")

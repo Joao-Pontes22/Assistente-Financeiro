@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import extract
 from Models.Models import Management
 from Routes.Credit_card_Routes import update_invoice
 from Dependecies.Dependecies import init_session
@@ -10,6 +11,21 @@ Management_Router = APIRouter(prefix="/Management", tags=["Management"])
 @Management_Router.get("View_Management")
 async def View_Management(session:Session = Depends(init_session)):
     management = session.query(Management).all()
+    return management
+@Management_Router.get("Get_defined_Management")
+async def get_defined_management(
+    year: int = None,
+    month: int = None,
+    date: date = None,
+    session:Session = Depends(init_session)
+    ):
+    manageement_array = {Management.Date: date,
+                         extract('year', Management.Date): year,
+                         extract('month', Management.Date): month}
+    management = None
+    for  column, value in manageement_array.items():
+        if value is not None:
+         management = session.query(Management).filter(column == value).all()
     return management
 
 @Management_Router.post("Update_balance_and_invoices")

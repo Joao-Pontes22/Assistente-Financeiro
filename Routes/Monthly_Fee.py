@@ -51,58 +51,112 @@ async def add_to_expense(value:float, entry_date: date, description: str, Catego
     return{"message": "Despesa adicionado com sucesso",
            "Despesa": new_expense}
 
-@Monthly_Fee_Router.get("/View_Fee_month")
-async def View_Monthly_Fee(month:int,session:Session = Depends(init_session)):
-    invoices_month = session.query(Monthly_Fee).filter(extract('month',Monthly_Fee.Date) == month).all()
-    return invoices_month
-    
-@Monthly_Fee_Router.get("/View_all_Monthly_Fee")
-async def View_Monthly_Fee(session:Session = Depends(init_session)):
-    invoices_month = session.query(Monthly_Fee).all()
-    return invoices_month
-
-@Monthly_Fee_Router.get("/View_Fee_year")
-async def View_Monthly_Fee(year:int,session:Session = Depends(init_session)):
-    invoices_year = session.query(Monthly_Fee).filter(extract('year',Monthly_Fee.Date) == year).all()
-    return invoices_year
+@Monthly_Fee_Router.get("/Get_Monthly_Fee")
+async def View_Monthly_Fee(month:int = None,
+                           year: int = None,
+                           description: str = None,
+                           status: str = None,
+                           category: str = None,
+                           date: date = None,
+                           credit_card_ID: int = None,
+                           session: Session = Depends(init_session)):
+    monthly_fee = {Monthly_Fee.Date: date,
+                   extract("year",Monthly_Fee.Date): year,
+                   extract("month",Monthly_Fee.Date): month,
+                   Monthly_Fee.Category: category,
+                   Monthly_Fee.Credit_card_ID: credit_card_ID,
+                   Monthly_Fee.Status: status,
+                   Monthly_Fee.Description: description
+                   }
+    for column, value in monthly_fee.items():
+        if value is not None:
+            invoices = session.query(Monthly_Fee).filter(column == value).all()
+        if not monthly_fee:
+            raise HTTPException(status_code=400, detail="Mensalidade não encontrado")
+    return invoices
 
 
 @Monthly_Fee_Router.put("/Update_status")
-async def Update_Status(id:int, status:str, session:Session = Depends(init_session)):
-    monthly_fee = session.query(Monthly_Fee).filter(Monthly_Fee.ID == id).first()
-    if not monthly_fee:
-        raise HTTPException (status_code=400, detail="Id não encontrado")
-    if monthly_fee.Status == "PAGO":
-        raise HTTPException(status_code=400, detail="Mensalidade já paga")
-    if status == "PAGO":
-        monthly_fee.Status = status
-        await add_to_expense(value=monthly_fee.Monthly_Value, entry_date=date.today(),session=session, description=monthly_fee.Description, Category=monthly_fee.Category)
-        await minus_invoices(value=monthly_fee.Monthly_Value,entry_date=date.today(),session=session)
+async def Update_Status( 
+                    status: str,                 
+                    month:int = None,
+                    id: int = None,
+                    year: int = None,
+                    date: date = None,
+                    credit_card_ID: int = None,
+                    session: Session = Depends(init_session)):
+    
+    monthly_fee_dict = {
+                Monthly_Fee.Date: date,
+                extract("year",Monthly_Fee.Date): year,
+                extract("month",Monthly_Fee.Date): month,
+                Monthly_Fee.Credit_card_ID: credit_card_ID,
+                Monthly_Fee.ID: id
+                   }
+    monthly_fee = None
+    for column, value in monthly_fee_dict.items():
+        if value is not None:
+            monthly_fee = session.query(Monthly_Fee).filter(column == value).all()
+        if monthly_fee is None:
+            raise HTTPException (status_code=400, detail="Id não encontrado")
+        if monthly_fee.Status == "PAGO":
+            raise HTTPException(status_code=400, detail="Mensalidade já paga")
+        if status == "PAGO":
+            monthly_fee.Status = status
+            await add_to_expense(value=monthly_fee.Monthly_Value, entry_date=date.today(),session=session, description=monthly_fee.Description, Category=monthly_fee.Category)
+            await minus_invoices(value=monthly_fee.Monthly_Value,entry_date=date.today(),session=session)
     session.commit()
     return{"message": "Mensalidade paga com sucesso",
            "Dados": monthly_fee}
 
 @Monthly_Fee_Router.put("/Update_infos")
-async def Update_infos(year:int, month:int, scheme: Update_Monthly_Fee_Scheme, session:Session = Depends(init_session)):
-    monthly_fee = session.query(Monthly_Fee).filter(extract("year",Monthly_Fee.Date) >= year,extract("month",Monthly_Fee.Date) >= month).all()
-    if not monthly_fee:
-        raise HTTPException(status_code=400, detail="Mensalidade dentro do periodo especificado não encontrado")
-    for i in monthly_fee:
-        if i.Description is not None:
-            i.Description = scheme.Description
-        if i.Date is not None:
-            i.Date = scheme.Date
-        if i.Category is not None:
-            i.Category = scheme.Category
-        if i.Monthly_Value is not None:
+async def Update_infos(
+                    scheme: Update_Monthly_Fee_Scheme,
+                    month:int = None,
+                    id: int = None,
+                    year: int = None,
+                    description: str = None,
+                    status: str = None,
+                    category: str = None,
+                    date: date = None,
+                    credit_card_ID: int = None,
+                    session: Session = Depends(init_session)):
+    
+    monthly_fee_dict = {
+                Monthly_Fee.Date: date,
+                extract("year",Monthly_Fee.Date): year,
+                extract("month",Monthly_Fee.Date): month,
+                Monthly_Fee.Category: category,
+                Monthly_Fee.Credit_card_ID: credit_card_ID,
+                Monthly_Fee.Status: status,
+                Monthly_Fee.Description: description,
+                Monthly_Fee.ID: id
+                   }
+    monthly_fee = None
+    if year and month is not None:
+        monthly_fee = session.query(Monthly_Fee).filter(extract("year",Monthly_Fee.Date) >= year,extract("month",Monthly_Fee.Date) >= month).all()
+        for i in monthly_fee:
+            i.Description = scheme.Description,
+            i.Category = scheme.Category,
+            i.Date = scheme.Date,
+            i.Status = scheme.Status,
             i.Monthly_Value = scheme.Monthly_Value
-        if i.Status is not None:
-            i.Status = scheme.Status
-    session.commit()
+        session.commit()
+        return{"message": "Informações atualizadas com sucesso",
+               "Mensalidades": monthly_fee}
+    else:
+        for column, value in monthly_fee_dict.items():
+            if value is not None:
+                monthly_fee = session.query(Monthly_Fee).filter(column == value).all()
+                for i in monthly_fee:
+                    i.Description = scheme.Description
+                    i.Category = scheme.Category
+                    i.Date = scheme.Date
+                    i.Status = scheme.Status
+                    i.Monthly_Value = scheme.Monthly_Value
+        session.commit()
+    if not monthly_fee_dict:
+        raise HTTPException(status_code=400, detail="Mensalidade não encontrado")
+
     return{"message": "Mensalidade atualizada com sucesso",
            "Dados": monthly_fee}
-
-@Monthly_Fee_Router.get("/View_fee")
-async def View_Per_year_month(year: int,month:int, session:Session = Depends(init_session)):
-    monthly_fee = session.query(Monthly_Fee).filter(extract("year",Monthly_Fee.Date) >= year,extract("month",Monthly_Fee.Date) >= month).all()
-    return monthly_fee
