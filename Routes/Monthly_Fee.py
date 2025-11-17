@@ -105,9 +105,6 @@ async def Update_Status(
             monthly_fee.Status = status
             await add_to_expense(value=monthly_fee.Monthly_Value, entry_date=date.today(),session=session, description=monthly_fee.Description, Category=monthly_fee.Category)
             await minus_invoices(value=monthly_fee.Monthly_Value,entry_date=date.today(),session=session)
-    session.commit()
-    return{"message": "Mensalidade paga com sucesso",
-           "Dados": monthly_fee}
 
 @Monthly_Fee_Router.put("/Update_infos")
 async def Update_infos(
