@@ -291,7 +291,7 @@ async def View_expenses(month:int = None,
                         extract('year', Credit_card.Date):  year,
                         extract('month', Credit_card.Date): month}
     expenses = None
-     mf = []
+    mf = []
     for column, value in credit_card_array.items():
         if  value is  not None:
             expenses = session.query(Credit_card).filter(column == value).all()
