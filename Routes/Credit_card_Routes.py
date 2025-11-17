@@ -294,7 +294,10 @@ async def View_expenses(month:int = None,
     for column, value in credit_card_array.items():
         if  value is  not None:
             expenses = session.query(Credit_card).filter(column == value).all()
-            mf = session.query(Monthly_Fee).filter(Monthly_Fee.Credit_card_ID == expenses.ID).all()
+            mf = []
+            for i in expenses:
+                consulta = session.query(Monthly_Fee).filter(Monthly_Fee.Credit_card_ID == i.ID).all()
+                mf.append(consulta)
     return {"Cartão de crédito": expenses, 
             "Mensalidade": mf}
 
