@@ -8,9 +8,9 @@ from Schemes.Management_scheme import Management_Scheme
 from datetime import date
 Management_Router = APIRouter(prefix="/Management", tags=["Management"])
 
-@Management_Router.get("View_Management")
+@Management_Router.get("Get_in_moment_Management")
 async def View_Management(session:Session = Depends(init_session)):
-    management = session.query(Management).all()
+    management = session.query(Management).order_by(Management.ID.desc()).first()
     return management
 @Management_Router.get("Get_defined_Management")
 async def get_defined_management(
@@ -19,13 +19,16 @@ async def get_defined_management(
     date: date = None,
     session:Session = Depends(init_session)
     ):
-    manageement_array = {Management.Date: date,
-                         extract('year', Management.Date): year,
-                         extract('month', Management.Date): month}
-    management = None
-    for  column, value in manageement_array.items():
-        if value is not None:
-         management = session.query(Management).filter(column == value).all()
+    
+    query = session.query(Management)
+    
+    if year is not None:
+        query.filter(extract('year', Management.Date)== year)
+    if month is not None:
+        query.filter(extract('year', Management.Date)== month)
+    if date is not None:
+        query.filter(Management.Date)
+    management = query.all()
     return management
 
 @Management_Router.post("Update_balance_and_invoices")

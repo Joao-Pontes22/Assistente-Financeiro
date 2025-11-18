@@ -48,10 +48,10 @@ async def minus_expense (value:float, entry_date:date, session:Session):
 
 @Expenses_Router.post("/add_expense")
 async def add_expense(scheme: Expense_scheme, session: Session = Depends(init_session)):
-    new_expense = Expenses(Description=scheme.Description,
+    new_expense = Expenses(Description=scheme.Description.upper(),
                            Value=scheme.Value,
                            Date=scheme.Date,
-                           Category=scheme.Category)
+                           Category=scheme.Category.upper())
     session.add(new_expense)
     await minus_expense(value=scheme.Value, session=session, entry_date=scheme.Date )
     session.commit()
@@ -76,19 +76,45 @@ async def delete_all_expense(session:Session = Depends(init_session)):
     return{"message": "Todas Despesa deletada com sucesso"}
 
 @Expenses_Router.put("/update_expense")
-async def update_expense(id:int,scheme:Update_Expense_scheme, session:Session = Depends(init_session)):
-    despesa = session.query(Expenses).filter(Expenses.ID == id).first()
-    if scheme.Description is not None:
-        despesa.Description = scheme.Description
-    if scheme.Category is not None:
-        despesa.Category = scheme.Category
-    if scheme.Value is not None:
-        despesa.Value = scheme.Value
-    if scheme.Date is not None:
-        despesa.Date = scheme.Date
+async def update_expense(scheme:Update_Expense_scheme, 
+                         
+    id: int = None,
+    description: str = None,
+    category: str = None,
+    year:int = None,
+    month: int = None,
+    date: date = None,
+    session:Session = Depends(init_session)
+    ):
+
+    query = session.query(Expenses)
+    
+    if id is not None:
+        query = query.filter(Expenses.ID == id)
+    if description is not None:
+        query = query.filter(Expenses.Description == description.upper())
+    if category is not None:
+        query = query.filter(Expenses.Category == category.upper())
+    if year is not None:
+        query = query.filter(extract('year',Expenses.Date) == year)
+    if month is not None:
+        query = query.filter(extract('month',Expenses.Date) == month)
+    if date is not None:
+        query = query.filter(Expenses.Date == date)
+    
+    expenses = query.all()
+    for i in expenses:
+        if scheme.Description is not None:
+            i.Description = scheme.Description
+        if scheme.Category is not None:
+            i.Category = scheme.Category
+        if scheme.Value is not None:
+            i.Value = scheme.Value
+        if scheme.Date is not None:
+            i.Date = scheme.Date
     session.commit()
     return{"message": "Dados atualizado com sucesso",
-           "Dados": despesa}
+           "Dados": expenses}
 
 @Expenses_Router.get("View_Expenses")
 async def View_Expenses(
@@ -101,19 +127,21 @@ async def View_Expenses(
     session:Session = Depends(init_session)
     ):
 
-    expense_array = {
-        Expenses.ID: id,
-        Expenses.Category:category,
-        Expenses.Description: description,
-        Expenses.Date: date,
-        extract('year', Expenses.Date): year,
-        extract('month', Expenses.Date): month
-    }
-    expenses = None
-    for column,value in expense_array.items():
-        if  value is not None:
-            expenses = session.query(Expenses).filter(column == value).all()
-        if expenses is None:
-            raise HTTPException(status_code=400, detail="despesa não encontrada")
+    query = session.query(Expenses)
+    
+    if id is not None:
+        query = query.filter(Expenses.ID == id)
+    if description is not None:
+        query = query.filter(Expenses.Description == description.upper())
+    if category is not None:
+        query = query.filter(Expenses.Category == category.upper())
+    if year is not None:
+        query = query.filter(extract('year',Expenses.Date) == year)
+    if month is not None:
+        query = query.filter(extract('month',Expenses.Date) == month)
+    if date is not None:
+        query = query.filter(Expenses.Date == date)
+    
+    expenses = query.all()
     return{"message": "Lista de despesas carregadas",
            "Dados": expenses}

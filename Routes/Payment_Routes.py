@@ -27,7 +27,7 @@ async def add_payment_to_management(value:float, date:str, session:Session):
 
 @Payment_Router.post("/add_Payment")
 async def add_Payment(scheme: Payment_Scheme, session:Session = Depends(init_session)):
-    new_payment = Payment(Description=scheme.Description,
+    new_payment = Payment(Description=scheme.Description.upper(),
                           Value=scheme.Value,
                           Date=date)
     session.add(new_payment)
@@ -44,26 +44,26 @@ async def Update_Payment(scheme: Update_Payment_Scheme,
                          month: int = None,
                          year: int = None,  
                          session:Session = Depends(init_session)):
-    filters = {Payment.ID: id,
-               Payment.Description: description,
-               Payment.Date: date,
-               extract("year",Payment.Date): year,
-               extract("month",Payment.Date): month}
-    payment = None
-    
-    for column, value in filters.items():
-        if value is not None:
-            payment = session.query(Payment).filter(column == value).first()
-            break
+    query = session.query(Payment)
+    if id is not None:
+        query = query.filter(Payment.ID == id)
+    if description is not None:
+        query = query.filter(Payment.Description == description)
+    if date is not None:
+        query = query.filter(Payment.Date == date)
+    if year is not None:
+        query = query.filter(extract('year',Payment.Date) == year)
+    if month is not None:
+        query = query.filter(extract('year',Payment.Date) == month)
+
+    payment = query.all()
     if payment is None:
         raise HTTPException(status_code=400, detail="Pagamento não encontrado")
-    update_fields = {"Description": scheme.Description,
-                         "Date": scheme.Date,
-                         "Value": scheme.Value
-                         }
-    for field, value in update_fields.items():
-            if value is not None:
-                setattr(payment,field,value)
+    
+    for i in payment:
+        i.Description = scheme.Description.upper()
+        i.Date= scheme.Date
+        i.Value = scheme.Value
     session.commit()
     return{"message": "Pagamento atualizado com sucesso"}
     
@@ -80,17 +80,19 @@ async def get_payment(id:int = None,
                       year: int = None,
                       session: Session = Depends(init_session)
                       ):
-    filters = {Payment.ID: id,
-               Payment.Description: description,
-               Payment.Date: date,
-               extract("year",Payment.Date): year,
-               extract("month",Payment.Date): month}
-    payment = None
-    
-    for column, value in filters.items():
-        if value is not None:
-            payment = session.query(Payment).filter(column == value).all()
-            break
+    query = session.query(Payment)
+    if id is not None:
+        query = query.filter(Payment.ID == id)
+    if description is not None:
+        query = query.filter(Payment.Description == description)
+    if date is not None:
+        query = query.filter(Payment.Date == date)
+    if year is not None:
+        query = query.filter(extract('year',Payment.Date) == year)
+    if month is not None:
+        query = query.filter(extract('year',Payment.Date) == month)
+
+    payment = query.all()
     if payment is None:
         raise HTTPException(status_code=400, detail="Pagamento não encontrado")
     return {"Pagamentos": payment}
