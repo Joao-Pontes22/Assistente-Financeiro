@@ -1,11 +1,7 @@
 from sqlalchemy import create_engine, Column, Date,  Integer, String, Integer, Float,ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
-import os
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL_INTERNAL",
-    "postgresql://projetos_qkuw_user:mHpA4su1PJuZ0DgfSzkGnISABy0l4LXN@dpg-d4iqc1s9c44c73b2dgtg-a/projetos_qkuw"
-)
+DATABASE_URL = "postgresql://projetos_qkuw_user:mHpA4su1PJuZ0DgfSzkGnISABy0l4LXN@dpg-d4iqc1s9c44c73b2dgtg-a.virginia-postgres.render.com/projetos_qkuw"
 
 db = create_engine(DATABASE_URL)
 base = declarative_base()
