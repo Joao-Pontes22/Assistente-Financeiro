@@ -4,7 +4,7 @@ import os
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL_INTERNAL",
-    "postgresql+psycopg2://finances_v7j8_user:5OqAIRw61E0lkEjF4aEitwwBpQyOwDoq@dpg-d49kqcq4d50c739cu690-a.virginia-postgres.render.com:5432/finances_v7j8?sslmode=require"
+    "postgresql://projetos_qkuw_user:mHpA4su1PJuZ0DgfSzkGnISABy0l4LXN@dpg-d4iqc1s9c44c73b2dgtg-a/projetos_qkuw"
 )
 
 db = create_engine(DATABASE_URL)
