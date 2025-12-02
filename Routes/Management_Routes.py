@@ -19,7 +19,7 @@ async def get_defined_management(
     date: date = None,
     session:Session = Depends(init_session)
     ):
-    
+    await update_managament(session=session)
     query = session.query(Management)
     
     if year is not None:

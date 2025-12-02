@@ -13,7 +13,7 @@ Credit_card_Router = APIRouter(prefix="/Credit_card", tags=["Credit_card"])
 async def Minus_invoices(value: float, entry_date: str, session: Session):
     last_management = (
         session.query(Management)
-        .order_by(Management.Date.desc())
+        .order_by(Management.ID.desc())
         .first()
     )
 
@@ -89,14 +89,6 @@ async def sum_invoices(value: float, entry_date: str, session: Session):
         }
     }
 async def update_invoice(entry_date: date, session: Session):
-
-    # Aceita string ou date
-    if isinstance(entry_date, str):
-        try:
-            entry_date = date.fromisoformat(entry_date)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Data inválida. Use YYYY-MM-DD")
-
     today = date.today()
     close_day = 10
     Day_Close_Card = date(today.year, today.month, close_day)
@@ -180,7 +172,8 @@ async def add_to_monthly_fee(Description: str, Date: str, session:Session):
     return{"message": "Mensalidade adicionado com sucesso"}
 
 @Credit_card_Router.post("/add_expense_CC")
-async def add_expense(scheme: Credit_card_scheme, session:Session =  Depends(init_session)):
+async def add_expensecc(scheme: Credit_card_scheme, session:Session =  Depends(init_session)):
+    await update_invoice(entry_date=scheme.Date, session=session)
     Total = scheme.Monthly_Value * scheme.Monthly_Fee
     new_cc = Credit_card(Description=scheme.Description.upper(),
                          Monthly_Value=scheme.Monthly_Value,
@@ -193,7 +186,6 @@ async def add_expense(scheme: Credit_card_scheme, session:Session =  Depends(ini
     session.add(new_cc)
     if scheme.Monthly_Fee > 1:
         await add_to_monthly_fee(scheme.Description.upper(), scheme.Date, session)
-    await update_invoice(entry_date=scheme.Date, session=session)
     await sum_invoices(value=scheme.Monthly_Value, entry_date=scheme.Date, session=session)
     session.commit()
 
@@ -214,25 +206,21 @@ async def Updade_expense(
                         session:Session = Depends(init_session)):
     
     query = session.query(Credit_card)
-    upper_status = status.upper() if status is not None else None
-    upper_description =  description.upper() if description is not None else None
-    upper_category = category.upper() if category is not None else None
     mf = []
     if  id is not None:
         query = query.filter(Credit_card.ID == id)
     if status is not None:
-        query = query.filter(Credit_card.Status == upper_status)
+        query = query.filter(Credit_card.Status == status.upper())
     if month is not None:
         query = query.filter(extract('month',Credit_card.Date) == month)
     if year is not None:
         query = query.filter(extract('year',Credit_card.Date) == year)
     if description is not None:
-        query = query.filter(Credit_card.Description == upper_description)
+        query = query.filter(Credit_card.Description == description.upper())
     if date is not None:
         query = query.filter(Credit_card.Date == date)
     if category is not None:
-        query = query.filter(Credit_card.Category == upper_category)
-
+        query = query.filter(Credit_card.Category == category.upper())
     expenses = query.first()
     if scheme.Category is not None:
         expenses.Category = scheme.Category.upper()
@@ -249,7 +237,11 @@ async def Updade_expense(
     mf = session.query(Monthly_Fee).filter(Monthly_Fee.Credit_card_ID == expenses.ID).all()
     for i in mf:
         session.delete(i)
-    await add_to_monthly_fee(scheme.Description.upper(), scheme.Date, session)
+    
+    if scheme.Description is None:
+        await add_to_monthly_fee(expenses.Description.upper(), expenses.Date, session)
+    else:
+        await add_to_monthly_fee(scheme.Description.upper(), scheme.Date, session)
     session.commit()
     return {"message": "Despesas e mensalidades atualizadas com sucesso"}
 
@@ -333,6 +325,7 @@ async def pay_cc(value:float, date:date, session:Session = Depends(init_session)
                    entry_date=date,
                    session=session)
     session.commit()
+    mf = session.query(Management).order_by(Management.ID.desc()).first()
     return{"message": "Fatura paga com sucesso",
-           "Fatura atual": session.query(Management).order_by(Management.ID.desc()).first()()}
+           "Fatura atual": mf}
     
