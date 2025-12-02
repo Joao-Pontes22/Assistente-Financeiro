@@ -333,7 +333,7 @@ async def pay_cc(value:float, date:date, session:Session = Depends(init_session)
                    entry_date=date,
                    session=session)
     session.commit()
-    mf = session.query(Management).order_by(Management.ID.desc()).first()()}
+    mf = session.query(Management).order_by(Management.ID.desc()).first())
     return{"message": "Fatura paga com sucesso",
            "Fatura atual": mf}
     
