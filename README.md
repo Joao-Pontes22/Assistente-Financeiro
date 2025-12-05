@@ -69,6 +69,12 @@ Permite inserir, editar, deletar e consultar transações de forma integrada, co
    ├── main.py         # Ponto de entrada  
    └── requirements.txt
    ```
+
+📄 Documentação automática
+Depois de rodar, acesse:
+   ```bash
+   Swagger: http://localhost:8000/docs
+   ```
 ## Endpoints
 
 # Expenses
@@ -244,4 +250,8 @@ Permite inserir, editar, deletar e consultar transações de forma integrada, co
    }
    ```
 
-
+👤 Autor
+   ```bash
+   João Vitor Oliveira Pontes
+   GitHub: https://github.com/Joao-Pontes22
+   ```
